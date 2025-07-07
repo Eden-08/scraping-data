@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Edit Data</title>
+  </head>
+  <body>
+    <h2>Edit Data</h2>
+    <form method="POST">
+      Title: <input name="title" value="{{ book.title }}" /><br />
+      Price: <input name="price" value="{{ book.price }}" /><br />
+      Rating: <input name="rating" value="{{ book.rating }}" /><br />
+      Availability: <input name="availability" value="{{ book.availability }}" /><br />
+      <input type="submit" value="Save" />
+    </form>
+  </body>
+</html>

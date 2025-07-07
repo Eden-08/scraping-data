@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Website Scraping Data</title>
+    <link rel="stylesheet" href="static/style.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  </head>
+  <body>
+    <h1>Scraping Data</h1>
+
+    <!-- Form Scraping -->
+    <form method="POST" action="/start" style="margin-bottom: 20px">
+      <label>URL:</label>
+      <input type="text" name="url" size="50" required placeholder="Masukan URL" />
+      <label>Jumlah Data:</label>
+      <input type="number" name="limit" value="20" min="1" max="1000" />
+      <label>Delay (detik):</label>
+      <input type="number" name="delay" value="1" step="0.5" min="0" />
+      <button type="submit">Mulai Scraping</button>
+    </form>
+
+    <!-- Tombol Stop -->
+    <form method="GET" action="/stop" style="margin-bottom: 10px">
+      <button type="submit" style="background-color: red; color: white">Hentikan Scraping</button>
+    </form>
+    <p id="stop-msg" style="color: red"></p>
+    <form method="GET" action="/">
+      <button type="submit">Refresh Tabel</button>
+    </form>
+
+    <div id="progress-container" style="display: none; margin-bottom: 20px">
+      <label>Progress Scraping:</label>
+      <div style="width: 100%; background: #eee; border-radius: 5px">
+        <div id="progress-bar" style="width: 0%; background: green; color: white; padding: 5px 0; text-align: center; border-radius: 5px">0%</div>
+      </div>
+    </div>
+
+    <!-- Tabel Preview -->
+    {% if books and books|length > 0 %}
+    <table id="bookTable" class="display">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Rating</th>
+          <th>Availability</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for book in books %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ book.title }}</td>
+          <td>{{ book.price }}</td>
+          <td>{{ book.rating }}</td>
+          <td>{{ book.availability }}</td>
+          <td>
+            <a href="/edit/{{ loop.index0 }}">Edit</a> |
+            <a href="/delete/{{ loop.index0 }}">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>🔍 Tidak ada data. Silakan scraping terlebih dahulu.</p>
+    {% endif %}
+
+    <br />
+    <a href="/download/csv"> Download CSV</a> |
+    <a href="/download/excel"> Download Excel</a>
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script>
+      let checkInterval = null;
+
+      function checkScrapingStatus() {
+        $.getJSON("/status", function (data) {
+          if (data.running || data.done || data.stopped) {
+            $("#progress-container").show();
+
+            let percent = data.total > 0 ? Math.floor((data.current / data.total) * 100) : 0;
+            percent = Math.min(percent, 100);
+            $("#progress-bar").css("width", percent + "%");
+            $("#progress-bar").text(percent + "%");
+
+            if (data.stopped) {
+              clearInterval(checkInterval);
+              $("#stop-msg").text("🛑 Scraping dihentikan oleh pengguna.");
+              $("#progress-bar").css("background", "orange");
+            }
+
+            if (data.done) {
+              clearInterval(checkInterval);
+              $("#progress-container").hide();
+              setTimeout(() => {
+                location.reload(); // Auto-refresh
+              }, 1000);
+            }
+          }
+        });
+      }
+      $(document).ready(function () {
+        checkInterval = setInterval(checkScrapingStatus, 1000);
+        $("#bookTable").DataTable();
+      });
+    </script>
+  </body>
+</html>
